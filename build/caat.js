@@ -41,6 +41,7 @@ TIME: 20:35:01
  */
 var CAAT= CAAT || {};
 
+
 /**
  * Common bind function. Allows to set an object's function as callback. Set for every function in the
  * javascript context.
@@ -65,6 +66,7 @@ Function.prototype.bind= Function.prototype.bind || function() {
  */
 function extend(subc, superc) {
     var subcp = subc.prototype;
+CAAT.Color
 
     // Class pattern.
     var F = function() {
@@ -2519,7 +2521,7 @@ var cp1= proxy(
      *
      * <p>
      * For am exponential interpolation, the getPosition function would look like this:
-     * <code>function getPosition(time) { return { x:time, y: Math.pow(time,2) }Ê}</code>.
+     * <code>function getPosition(time) { return { x:time, y: Math.pow(time,2) }}</code>.
      * meaning that for time=0.5, a value of 0,5*0,5 should use instead.
      *
      * <p>
@@ -3862,7 +3864,7 @@ var cp1= proxy(
          * 
          * @param time the time to apply the scale for.
          * @param actor the target actor to Scale.
-         * @return {object} an object of the form <code>{ scaleX: {float}, scaleY: {float}Ê}</code>
+         * @return {object} an object of the form <code>{ scaleX: {float}, scaleY: {float}}</code>
          */
 		setForTime : function(time,actor) {
 
@@ -4183,7 +4185,7 @@ var cp1= proxy(
          * If autoRotate=true, the actor is rotated as well. The rotation anchor will (if set) always be ANCHOR_CENTER.
          * @param time an integer indicating the time the behavior is being applied at.
          * @param actor a CAAT.Actor instance to be translated.
-         * @return {object} an object of the form <code>{ x: {float}, y: {float}Ê}</code>.
+         * @return {object} an object of the form <code>{ x: {float}, y: {float}}</code>.
          */
 		setForTime : function(time,actor) {
 
@@ -4330,7 +4332,7 @@ var cp1= proxy(
          *
          * @param time the time to apply the scale for.
          * @param actor the target actor to Scale.
-         * @return {object} an object of the form <code>{ scaleX: {float}, scaleY: {float}Ê}</code>
+         * @return {object} an object of the form <code>{ scaleX: {float}, scaleY: {float}}</code>
          */
 		setForTime : function(time,actor) {
 
@@ -5318,6 +5320,21 @@ var cp1= proxy(
             this.parent= parent;
             return this;
         },
+
+        getScene : function() {
+            if ( typeof this.parent ==='undefined' || this.parent === null) {
+                return  null;
+            }
+
+            //console.log("this.parent.name " + this.parent.name);
+            if (this.parent.name === 'CAAT.Scene') {
+                return  this.parent;
+            }
+
+            return this.parent.getScene();
+        },
+
+
         /**
          * Set this actor's background image.
          * The need of a background image is to kept compatibility with the new CSSDirector class.
@@ -7156,7 +7173,7 @@ var cp1= proxy(
                 throw('adding to a container an element with parent.');
             }
 
-            child.parent= this;
+            child.setParent(this); // Pour surcharger / polymorphisme de TextArea
             this.childrenList.push(child);
             child.dirty= true;
 
@@ -9038,6 +9055,7 @@ var cp1= proxy(
         nDirtyRects         :   0,
 
         collidingActors     :   null,
+        name                : "CAAT.Director",
 
         solveCollissions : function() {
             if ( !this.collidingActors.length ) {
@@ -10309,7 +10327,7 @@ var cp1= proxy(
          *    will have their areas redrawn.
          *  + CAAT.Director.CLEAR_NONE. clears nothing.
          *
-         * @param clear {CAAT.Director.CLEAR_ALL |ÊCAAT.Director.CLEAR_NONE | CAAT.Director.CLEAR_DIRTY_RECTS}
+         * @param clear {CAAT.Director.CLEAR_ALL |CAAT.Director.CLEAR_NONE | CAAT.Director.CLEAR_DIRTY_RECTS}
          * @return this.
          */
         setClear : function(clear) {
@@ -11153,6 +11171,29 @@ CAAT.registerKeyListener= function(f) {
     CAAT.keyListeners.push(f);
 };
 
+CAAT.registerKeyListenerIfNeeded= function(f) {
+ for( var i=0; i<CAAT.keyListeners.length; i++ ) {
+        if ( f===CAAT.keyListeners[i] ) {            
+            return;
+        }
+    }
+
+    CAAT.keyListeners.push(f);
+};
+
+/**
+ * Unregister a key events notification function
+ * @param f {function}
+ */
+CAAT.unregisterKeyListener= function(f) {
+    for( var i=0; i<CAAT.windowResizeListeners.length; i++ ) {
+        if ( f===CAAT.keyListeners[i] ) {
+            CAAT.keyListeners.splice(i,1);
+            return;
+        }
+    }
+};
+
 CAAT.Keys = {
     ENTER:13,
     BACKSPACE:8,
@@ -11324,7 +11365,7 @@ CAAT.GlobalEnableEvents= function __GlobalEnableEvents() {
 
     this.GlobalEventsEnabled= true;
 
-    window.addEventListener('keydown',
+    document.addEventListener('keydown',
         function(evt) {
             var key = (evt.which) ? evt.which : evt.keyCode;
 
@@ -11350,7 +11391,7 @@ CAAT.GlobalEnableEvents= function __GlobalEnableEvents() {
         },
         false);
 
-    window.addEventListener('keyup',
+    document.addEventListener('keyup',
         function(evt) {
 
             var key = (evt.which) ? evt.which : evt.keyCode;
@@ -11375,9 +11416,29 @@ CAAT.GlobalEnableEvents= function __GlobalEnableEvents() {
                 }
             }
         },
-        false );
+        true );
 
-    window.addEventListener('resize',
+    document.addEventListener('keypress',
+        function(evt) {
+
+            var key = (evt.which) ? evt.which : evt.charCode;
+
+                for( var i=0; i<CAAT.keyListeners.length; i++ ) {
+                    CAAT.keyListeners[i]( new CAAT.KeyEvent(
+                        key,
+                        'press',
+                        {
+                            alt:        CAAT.KEY_MODIFIERS.alt,
+                            control:    CAAT.KEY_MODIFIERS.control,
+                            shift:      CAAT.KEY_MODIFIERS.shift
+                        },
+                        evt));
+                }
+        },
+        true );
+
+
+    document.addEventListener('resize',
         function(evt) {
             for( var i=0; i<CAAT.windowResizeListeners.length; i++ ) {
                 CAAT.windowResizeListeners[i].windowResized(
@@ -11385,7 +11446,7 @@ CAAT.GlobalEnableEvents= function __GlobalEnableEvents() {
                         window.innerHeight);
             }
         },
-        false);
+        true);
 };
 
 /**
@@ -12307,6 +12368,7 @@ CAAT.RegisterDirector= function __CAATGlobal_RegisterDirector(director) {
                   }
               }
         }
+        
 
         
     };
@@ -12538,6 +12600,7 @@ CAAT.RegisterDirector= function __CAATGlobal_RegisterDirector(director) {
         timerSequence:                  0,      // incremental CAAT.TimerTask id.
 
         paused:                         false,
+        name:                           "CAAT.Scene",
 
         isPaused :  function()  {
             return this.paused;
@@ -13657,7 +13720,7 @@ CAAT.modules.CircleManager = CAAT.modules.CircleManager || {};/**
          * Transparent means that every scan pixel is alpha=0.
          * @param image
          * @param threshold {integer} any value below or equal to this will be optimized.
-         * @param !areas { object{ top<boolean>, bottom<boolean>, left<boolean, right<boolean> }Ê}
+         * @param !areas { object{ top<boolean>, bottom<boolean>, left<boolean, right<boolean> }}
          */
     CAAT.modules.ImageUtil.optimize= function(image, threshold, areas ) {
         threshold>>=0;
@@ -13950,9 +14013,10 @@ CAAT.modules.CircleManager = CAAT.modules.CircleManager || {};/**
             var cchar;
 
             for( i=0; i<chars.length; i++ ) {
-                var cw= Math.max( 1, (ctx.measureText( chars.charAt(i) ).width>>0)+1 ) + 2 * padding ;
+               // var cw= Math.max( 1, (ctx.measureText( chars.charAt(i) ).width>>0)+1 ) + 2 * padding ;
+                var cw= Math.max( 1, (ctx.measureText( chars.charAt(i) ).width>>0)+1 );
                 charWidth.push(cw);
-                textWidth+= cw;
+                textWidth+= cw + 2 * padding;
             }
 
             canvas.width= textWidth;
@@ -13966,19 +14030,19 @@ CAAT.modules.CircleManager = CAAT.modules.CircleManager || {};/**
 
             this.charMap= {};
 
-            x=0;
+            x=padding; // x=0
             for( i=0; i<chars.length; i++ ) {
                 cchar= chars.charAt(i);
-                ctx.fillText( cchar, x+padding, 0 );
+                ctx.fillText( cchar, x, 0 ); // x + padding
                 if ( this.strokeStyle ) {
                     ctx.beginPath();
-                    ctx.strokeText( cchar, x+padding,  0 );
+                    ctx.strokeText( cchar, x,  0 ); // x + padding
                 }
                 this.charMap[cchar]= {
                     x:      x,
                     width:  charWidth[i]
                 };
-                x+= charWidth[i];
+                x+= charWidth[i]  + 2 * padding; // prochaine position
             }
 
             this.image= CAAT.modules.ImageUtil.optimize( canvas, 32, { top: true, bottom: true, left: false, right: false } );
@@ -14025,6 +14089,10 @@ CAAT.modules.CircleManager = CAAT.modules.CircleManager || {};/**
                 }
             }
         },
+        // Temporary hack, best solution should be to reconciliate drawing API
+        drawString : function( ctx, str, x, y ) {
+            this.drawText(str, ctx, x,y);
+            },
 
         save : function() {
             var str= "image/png";
@@ -17775,3 +17843,566 @@ function makeOrtho(left, right, bottom, top, znear, zfar) {
     };
 
 })();
+
+(function() {
+
+    /**
+     * TextArea
+     *
+     * Single line editor, movable cursor, insertion mode, backspace and delete
+     * Requires a sprite sheet based font which provides stringWidth(str)
+
+     * @constructor
+     * @extends CAAT.ActorContainer
+     *
+     */
+    CAAT.TextArea = function() {
+        CAAT.TextArea.superclass.constructor.call(this);
+
+        // Setup default font sprite sheet
+        this.setDefaultFont();
+
+        this.lineHeight = this.font.height;
+        this.textAlign= "left";
+        this.textBaseline= "top";
+        this.outlineColor= "black";
+        this.clip= false;
+        this.enableEvents(true);
+        this.setDefaultCursor();
+
+        // initial state: no focus, no cursor
+        this.hideCursor();
+
+        return this;
+    };
+
+    CAAT.TextArea.prototype= {
+        font:               null,   // a sprite sheet based font object (CAAT.Font or SpriteImage)                                    
+        text:               null,   // a string with the text to draw.
+        textWidth:          0,      // an integer indicating text width in pixels.
+        textHeight:         0,      // an integer indicating text height in pixels.
+        cursorPos:          0,      // after last character of text
+        cursorActor:        null,
+        lineHeight:         0,
+
+    
+        setDefaultFont: function() {
+          this.font = new CAAT.Font().
+                        setFontSize(24).
+                        createDefault(2); // padding required to isolate letters from each others
+
+    },
+
+        setDefaultCursor: function() {
+            if (this.cursorActor != null) {
+                this.removeChild(this.cursorActor);
+            }
+
+                this.cursorActor= new CAAT.TextActor().
+                    setFont(this.font).
+                    setTextFillStyle("black").
+                    setOutline(true).
+                    enableEvents(false).
+                    setText('_').
+                    setLocation (0, 5);
+
+                this.setDefaultCursorBehavior();
+                this.addChild(this.cursorActor);
+        },
+
+        setDefaultCursorBehavior : function() {
+            this.cursorActor.emptyBehaviorList();
+            var cursorAlphaB = new CAAT.AlphaBehavior().
+                  setValues(1,0).
+                  setCycle(true).
+                  setPingPong().
+                  setFrameTime(0, 1500);
+
+            this.cursorActor.addBehavior(cursorAlphaB);
+        },
+
+        hideCursor : function() {
+             this.cursorActor.emptyBehaviorList();
+             this.cursorActor.setVisible(false);
+        },
+
+        showCursor : function() {
+             this.cursorActor.setVisible(true);
+             this.setDefaultCursorBehavior();
+        },
+
+       
+
+        onFocus: function() {
+          // Cursor becomes visible  
+          if (this.cursorActor != null) {
+            this.showCursor();
+            } else {
+                this.setDefaultCursor();
+            }
+
+        },
+
+        onFocusLost: function() {
+            if (this.cursorActor != null) {
+               // Make cursor invisible
+                this.hideCursor();
+            } 
+          
+        },
+
+       
+        moveLeft : function( ) {
+            if (null!==this.text && this.cursorPos > 0) {
+               this.setCursorPos(this.cursorPos -1);  
+            }
+        },
+        
+        moveRight : function( ) {
+            if (null!==this.text && this.cursorPos < this.text.length) {
+               this.setCursorPos(this.cursorPos +1);  
+            }
+        },
+
+        delete : function( ) {
+           if (null!==this.text && this.text.length > 0) {
+            var newText = this.text.substr(0 , this.cursorPos) +  this.text.substr( this.cursorPos +1, this.text.length  - this.cursorPos - 1);
+            this.setText(newText, true);
+            // cursorPos modified only if last character was deleted
+            if (this.cursorPos > this.text.length) {
+                this.setCursorPos(this.text.length);
+               // this.cursorPos = this.text.length;
+            }
+
+           }
+        },
+
+        backspace : function( ) {
+           if (this.cursorPos > 0) {
+            var newText = this.text.substr(0 , this.cursorPos -1) +  this.text.substr( this.cursorPos, this.text.length  - this.cursorPos);
+            this.setText(newText, true);
+            this.setCursorPos(this.cursorPos - 1);
+           }
+        },
+
+        insert : function( newChar ) {
+           if ( null!== this.text) {
+            var newText = this.text.substr(0 , this.cursorPos) + newChar +   this.text.substr( this.cursorPos, this.text.length  - this.cursorPos);
+            this.setText(newText, true);         
+           } else {
+               this.setText(newChar, true);
+           }
+           this.setCursorPos(this.cursorPos+1);
+        },
+
+        setCursorPos : function( pos ) {
+            console.log("setCursorPos : before " + this.cursorPos);
+              if ( null=== this.text) {
+             this.cursorPos = 0;
+           } else {
+                if (typeof(pos) === 'undefined'  || null ===pos) {
+                       this.cursorPos = this.text.length; 
+                } else { 
+            this.cursorPos = pos;
+              }
+              console.log("setCursorPos : after " + this.cursorPos);
+              cursorPosx = this.font.stringWidth(this.text.substr(0 , this.cursorPos));
+
+              if (this.cursorActor != null) {
+                this.cursorActor.setLocation( cursorPosx , 0);
+              }
+           }
+        },
+
+        
+        /**
+         * Set the text to be shown by the actor.
+         * @param sText a string with the text to be shown.
+         * @return this
+         */
+        setText : function( sText, keepCursor) {
+            this.text= sText;
+            if ( null===this.text || this.text==="" ) {
+                this.width= this.height= 0;
+            }
+            this.calcTextSize( CAAT.director[0] );
+            if (typeof(keepCursor) === 'undefined'  || !keepCursor) {
+            this.setCursorPos();
+            }
+            return this;
+        },
+        /**
+         * Sets the font to be applied for the text.
+         * @param font a string with a valid canvas rendering context font description.
+         * @return this
+         */
+        setFont : function(font) {
+
+            if ( !font ) {
+                this.setDefaultFont();
+            }
+
+            this.font= font;
+            this.calcTextSize( CAAT.director[0] );
+
+            // Update cursor to the same font
+            this.setDefaultCursor();
+
+            return this;
+        },
+        /**
+         * Calculates the text dimension in pixels and stores the values in textWidth and textHeight
+         * attributes.
+         * If Actor's width and height were not set, the Actor's dimension will be set to these values.
+         * @return this
+         */
+        calcTextSize : function() {
+
+            if ( typeof this.text==='undefined' || null===this.text || ""===this.text ) {
+                this.textWidth= 0;
+                this.textHeight= 0;
+                return this;
+            }
+
+            // The font provides stringWidth()
+
+            this.textWidth= this.font.stringWidth(this.text);
+            this.width= this.textWidth;
+
+
+            this.lineHeight = this.font.height;
+            this.textHeight= this.lineHeight;
+            this.height= this.textHeight;
+
+            return this;
+        },
+
+        /**
+         * Custom paint method for TextArea instances.
+         * If the path attribute is set, the text will be drawn traversing the path.
+         *
+         * @param director a valid CAAT.Director instance.
+         * @param time an integer with the Scene time the Actor is being drawn.
+         */
+        paint : function(director, time) {
+
+            CAAT.TextArea.superclass.paint.call(this, director, time );
+
+            // TextArea can be cached (but not editors)
+            if ( this.cached ) {
+                // cacheAsBitmap sets this actor's background image as a representation of itself.
+                // So if after drawing the background it was cached, we're done.
+                return;
+            }
+
+            if ( null===this.text) {
+                return; 
+            }
+
+            if ( this.textWidth===0 || this.textHeight===0 ) {
+                this.calcTextSize(director);
+            }
+
+            var ctx= director.ctx;
+            
+            // Is drawing on path useful here ?
+            if (typeof this.font === 'object') {
+                return this.drawSpriteText(director,time);
+            }        
+        },
+        
+        // Ou peut on conserver les mÃ©thodes hÃ©ritÃ©es de TextActor?
+
+        /**
+         * Private.
+         * Draw the text using a sprited font instead of a canvas font.
+         * @param director a valid CAAT.Director instance.
+         * @param time an integer with the Scene time the Actor is being drawn.
+         */
+        drawSpriteText: function(director, time) {
+                this.font.drawString( director.ctx, this.text, 0, 0);
+        }
+    };
+
+    extend( CAAT.TextArea, CAAT.ActorContainer, null);
+})();
+
+
+(function() {
+
+    /**
+     * TextInputGroup
+     * Invisible Container managing the focus of a set of TextAreas
+     * childrenList order is used for navigation
+     * focus can also be set programatically
+
+     * @constructor
+     * @extends CAAT.ActorContainer
+     *
+     */
+    CAAT.TextInputGroup = function() {
+        CAAT.TextInputGroup.superclass.constructor.call(this);
+
+        // A singleton is created to store a map between scenes and input groups
+        if (typeof(CAAT.TextInputGroup.SceneFocusManager) === 'undefined' ) {
+             CAAT.TextInputGroup.SceneFocusManager = {};// dictionnaire Scene -> TextInputGroup 
+        }
+
+        return this;
+    };
+
+
+    CAAT.TextInputGroup.prototype= {
+        focusedChild:       null,
+        focusedChildIndex:    null, // position in childrenList of ActorContainer
+
+        setParent : function(parent) {
+            CAAT.TextInputGroup.superclass.setParent.call(this, parent);
+            return this;
+        },
+
+        deferredInit: function(director) {
+            var sceneIndex = director.getSceneIndex(this.getScene()); // A tester
+
+            // Associate Scene -> TextInputGroup
+            CAAT.TextInputGroup.SceneFocusManager[sceneIndex] = this;
+
+            // Key event callback must be defined only once, otherwise key events will be duplicated
+            CAAT.registerKeyListenerIfNeeded(this.___keyAction.bind(this));
+        },
+
+
+         ___keyAction: function(event) {
+            // Events are discarded if the scene is not current one
+            if (CAAT.director[0].currentScene != this.getScene()) { return; }
+
+                var inputText = this.getFocused();
+                if (typeof(inputText) === 'undefined'  || typeof(inputText) === 'undefined'  || null ===inputText) return;
+
+                if (event.getAction()=='down') {
+                // event.preventDefault();
+                 //console.log("text = " + CAAT.TextArea.focus.text);
+                 switch (event.getKeyCode()) {
+                     case CAAT.Keys['DELETE']:
+                      // The empty text case has already been excluded above
+                      inputText.delete();    
+                      event.preventDefault();              
+                     break;
+                    case CAAT.Keys['BACKSPACE']:
+                      // The empty text case has already been excluded above
+                      inputText.backspace();    
+                      event.preventDefault();              
+                     break;                 
+                    case CAAT.Keys['LEFT']:
+                    inputText.moveLeft();
+                    event.preventDefault();
+                    break;
+                      case CAAT.Keys['RIGHT']:
+                    inputText.moveRight();
+                    event.preventDefault();
+                    break;
+                      case CAAT.Keys['UP']:
+                        case CAAT.Keys['DOWN']: 
+                        // LATER ?
+                          event.preventDefault();
+                        break;
+                    case CAAT.Keys['TAB']:
+                        if (event.isShiftPressed()) {
+                            this.prevChild();
+                        } else {
+                            this.nextChild();
+                        }
+                          event.preventDefault();
+                        break;                    
+                     default:
+                     // other keys handled as keypress events
+                     // event.preventDefault(); is not called as it would cancel the keypress event
+                     break;
+                 }
+
+            }
+            if (event.getAction()=='press') {
+
+                switch (event.getKeyCode()) {
+                     case CAAT.Keys['DELETE']:
+                     case CAAT.Keys['BACKSPACE']:           
+                     break;
+                    case CAAT.Keys['LEFT']:
+
+                    break;
+                      case CAAT.Keys['RIGHT']:
+
+                    break;              
+                     default:
+                    var newChar = String.fromCharCode(event.getKeyCode());
+                        inputText.insert(newChar);
+                    
+                     break;
+                 }
+  
+            }
+
+        },
+
+        getFocused: function() {
+          return this.focusedChild;
+        },
+
+
+        prevChild: function() {
+            if (this.focusedChildIndex > 0) {
+
+                this.notifyFocusLost(this.focusedChild);  
+
+                this.focusedChildIndex--;
+                this.focusedChild = this.childrenList[this.focusedChildIndex];
+  
+                this.notifyFocus(this.focusedChild);
+            }
+        },
+
+        nextChild: function() {
+             var newFocusedChildIndex = null;
+
+                 if (this.focusedChildIndex < this.childrenList.length -1) {
+                    newFocusedChildIndex = this.focusedChildIndex+1;
+                    newFocusedChild = this.childrenList[this.focusedChildIndex++];
+      
+                } else {
+                if (this.focusedChildIndex === this.childrenList.length -1) {
+                     newFocusedChildIndex = 0;
+                     newFocusedChild = this.childrenList[newFocusedChildIndex];
+                 }
+             }
+
+                 if (newFocusedChildIndex !=null) {
+                     this.notifyFocusLost(this.focusedChild);
+
+                     this.focusedChildIndex = newFocusedChildIndex;
+                     this.focusedChild = this.childrenList[newFocusedChildIndex];
+
+                     this.notifyFocus(this.focusedChild);
+                 }
+        },        
+       /**
+         * Removes all children from this ActorContainer.
+         *
+         * @return this
+         */
+        emptyChildren : function() {
+            CAAT.TextInputGroup.superclass.emptyChildren.call(this);
+
+            // notify previously focused Child of lost of focus ?
+            // The actor will not be shown anymore ??
+            this.notifyFocusLost(this.focusedChild);
+
+            this.focusedChild= null;
+            this.focusedChildIndex = null;
+
+            return this;
+        },
+       /**
+         * Adds an Actor to this ActorContainer.
+
+         * @param child a CAAT.Actor object instance.
+         * @return this
+         */
+        addChild : function(child) {
+
+            CAAT.TextInputGroup.superclass.addChild.call(this, child);
+
+            // Focus it only if it is the first child
+            this.setFocusToFirstChildOnly(child);
+
+            return this;
+        },
+        
+         setFocusToFirstChildOnly : function(child) {
+            // set focus only if it is the first child added
+            if (this.focusedChild === null) {
+                this.focusedChildIndex = 0;
+                this.focusedChild = child;
+                this.notifyFocus(this.focusedChild);
+            }
+        },
+       
+        /**
+         * Adds an Actor to this ActorContainer.
+         *
+         * @param child a CAAT.Actor object instance.
+         *
+         * @return this
+         */
+        addChildAt : function(child, index) {
+
+            CAAT.TextInputGroup.superclass.addChildAt.call(this, child, index);
+
+            // No change in focus in the general case
+            this.setFocusToFirstChildOnly(child);
+
+            return this;
+        },
+       
+        /**
+         * Removed an Actor form this ActorContainer.
+         * If the Actor is not contained into this Container, nothing happends.
+         *
+         * @param child a CAAT.Actor object instance.
+         *
+         * @return this
+         */
+        removeChild : function(child) {
+
+            CAAT.TextInputGroup.superclass.removeChild.call(this, child);
+
+            // If the child had focus, update the state
+             if (this.focusedChild === child) {
+                this.focusedChild = null;
+                this.focusedChildIndex = null;
+                this.notifyFocusLost(child);
+            }
+
+            return this;
+        },
+
+        /**
+         * Sets the font to be applied for the text.
+         * @param font a string with a valid canvas rendering context font description.
+         * @return this
+         */
+        focusChild : function(child) {
+            var childIndex = this.childrenList.indexOf(child);
+
+            if (childIndex != -1) {
+
+                if (this.focusedChild != null) {
+                    this.notifyFocusLost(this.focusedChild);
+                }
+
+                this.focusedChild = child;
+                this.focusedChildIndex = childIndex;
+                this.notifyFocus(child);
+        }
+
+            return this;
+        },
+
+        notifyFocus : function(child) {
+            child.onFocus();
+        },
+
+
+        notifyFocusLost : function(child) {
+            if (child != null) {
+                child.onFocusLost();
+            }
+        }
+
+
+        
+        
+    };
+
+    extend( CAAT.TextInputGroup, CAAT.ActorContainer, null);
+})();
+

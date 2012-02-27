@@ -134,18 +134,6 @@
         dirtyRectsEnabled   :   false,
         nDirtyRects         :   0,
 
-        collidingActors     :   null,
-
-        solveCollissions : function() {
-            if ( !this.collidingActors.length ) {
-                return;
-            }
-
-
-        },
-        addCollidingActor : function( actor ) {
-            this.collidingActors.push( actor );
-        },
         checkDebug : function() {
             if ( CAAT.DEBUG ) {
                 var dd= new CAAT.Debug().initialize( this.width, 60 );
@@ -262,7 +250,10 @@
          * @return this
          */
         initialize : function(width, height, canvas, proxy) {
-            canvas = canvas || document.createElement('canvas');
+            if ( !canvas ) {
+              canvas= document.createElement('canvas');
+              document.body.appendChild(canvas);
+            }
             this.canvas = canvas;
 
             if ( typeof proxy==='undefined' ) {
@@ -306,7 +297,11 @@
          */
         initializeGL : function(width, height, canvas, proxy) {
 
-            canvas = canvas || document.createElement('canvas');
+            if ( !canvas ) {
+              canvas= document.createElement('canvas');
+              document.body.appendChild(canvas);
+            }
+
             canvas.width = width;
             canvas.height = height;
 
@@ -323,6 +318,7 @@
                 this.gl = canvas.getContext("experimental-webgl"/*, {antialias: false}*/);
                 this.gl.viewportWidth = width;
                 this.gl.viewportHeight = height;
+                CAAT.GLRENDER= true;
             } catch(e) {
             }
 
@@ -601,6 +597,8 @@
 
                 ctx.save();
                 if ( this.dirtyRectsEnabled ) {
+                    this.modelViewMatrix.transformRenderingContext( ctx );
+
                     if ( !CAAT.DEBUG_DIRTYRECTS ) {
                         ctx.beginPath();
                         this.nDirtyRects=0;
@@ -666,7 +664,7 @@
                     }
                 }
 
-                if ( CAAT.DEBUG && CAAT.DEBUG_DIRTYRECTS ) {
+                if ( this.nDirtyRects>0 && CAAT.DEBUG && CAAT.DEBUG_DIRTYRECTS ) {
                     ctx.beginPath();
                     this.nDirtyRects=0;
                     var dr= this.cDirtyRects;
@@ -677,11 +675,10 @@
                             this.nDirtyRects++;
                         }
                     }
-                    if ( this.nDirtyRects>0 ) {
-                        ctx.clip();
-                        ctx.fillStyle='rgba(160,255,150,.4)';
-                        ctx.fillRect(0,0,this.width, this.height);
-                    }
+
+                    ctx.clip();
+                    ctx.fillStyle='rgba(160,255,150,.4)';
+                    ctx.fillRect(0,0,this.width, this.height);
                 }
 
                 ctx.restore();
@@ -699,13 +696,13 @@
          */
         animate : function(director, time) {
             this.setModelViewMatrix(this);
+            this.modelViewMatrixI= this.modelViewMatrix.getInverse();
             this.setScreenBounds();
 
             this.dirty= false;
             this.invalid= false;
             this.dirtyRectsIndex= -1;
             this.cDirtyRects= [];
-            this.collidingActors= [];
 
             var cl= this.childrenList;
             var cli;
@@ -714,8 +711,6 @@
                 var tt = cli.time - cli.start_time;
                 cli.animate(this, tt);
             }
-
-            this.solveCollissions();
 
             return this;
         },
@@ -1500,7 +1495,9 @@
             // transformar coordenada inversamente con affine transform de director.
 
             var pt= new CAAT.Point( posx, posy );
-            this.modelViewMatrixI= this.modelViewMatrix.getInverse();
+            if ( !this.modelViewMatrixI ) {
+                this.modelViewMatrixI= this.modelViewMatrix.getInverse();
+            }
             this.modelViewMatrixI.transformCoord(pt);
             posx= pt.x;
             posy= pt.y
@@ -1593,6 +1590,8 @@
             var lactor;
             var pos;
 
+            var ct= this.currentScene ? this.currentScene.time : 0;
+
             // drag
 
             if (this.isMouseDown && null !== this.lastSelectedActor) {
@@ -1624,7 +1623,7 @@
                             new CAAT.Point(
                                 this.screenMousePoint.x,
                                 this.screenMousePoint.y),
-                            this.currentScene.time));
+                            ct));
 
                 this.prevMousePoint.x= pos.x;
                 this.prevMousePoint.y= pos.y;
@@ -1644,7 +1643,7 @@
                                 e,
                                 lactor,
                                 this.screenMousePoint,
-                                this.currentScene.time));
+                                ct));
                         this.in_ = false;
                     }
 
@@ -1656,7 +1655,7 @@
                                 e,
                                 lactor,
                                 this.screenMousePoint,
-                                this.currentScene.time));
+                                ct));
                         this.in_ = true;
                     }
                 }
@@ -1683,7 +1682,7 @@
                             e,
                             this.lastSelectedActor,
                             this.screenMousePoint,
-                            this.currentScene.time));
+                            ct));
                 }
 
                 if (null !== lactor) {
@@ -1697,7 +1696,7 @@
                             e,
                             lactor,
                             this.screenMousePoint,
-                            this.currentScene.time));
+                            ct));
                 }
             }
 
@@ -1713,7 +1712,7 @@
                         e,
                         lactor,
                         this.screenMousePoint,
-                        this.currentScene.time));
+                        ct));
             }
 
             this.lastSelectedActor = lactor;
@@ -1768,7 +1767,7 @@
                             e,
                             lactor,
                             this.screenMousePoint,
-                            this.currentScene.time);
+                            this.currentScane ? this.currentScene.time : 0);
 
                     lactor.mouseOver(ev);
                     lactor.mouseEnter(ev);

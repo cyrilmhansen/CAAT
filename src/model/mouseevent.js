@@ -369,7 +369,10 @@ CAAT.GlobalEnableEvents= function __GlobalEnableEvents() {
     this.GlobalEventsEnabled= true;
 
     // Setup and activation of NoVNC key events library
-    keyboard = new Keyboard({'target': MAINDOC,
+    if (typeof(CAAT_EVT_SRC)=='undefined') {
+	CAAT_EVT_SRC = window;
+    }
+    keyboard = new Keyboard({'target': CAAT_EVT_SRC,
         'onKeyPress':  function(keysym, down, evt) {
 
 	if (down) {
@@ -444,7 +447,7 @@ CAAT.GlobalEnableEvents= function __GlobalEnableEvents() {
 
 
 
-    MAINDOC.addEventListener('resize',
+    CAAT_EVT_SRC.addEventListener('resize',
         function(evt) {
             for( var i=0; i<CAAT.windowResizeListeners.length; i++ ) {
                 CAAT.windowResizeListeners[i].windowResized(

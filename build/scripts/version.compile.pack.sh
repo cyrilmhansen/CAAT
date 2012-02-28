@@ -36,6 +36,9 @@ echo -e "Created on:" >> "${FILE_CAAT}"
 date "+DATE: %Y-%m-%d%nTIME: %H:%M:%S" >> "${FILE_CAAT}"
 echo -e "*/\n\n" >> "${FILE_CAAT}"
 
+
+more $CAAT_SRC_DIR/modules/TextInput/noVNC_Util.js >> "${FILE_CAAT}"
+more $CAAT_SRC_DIR/modules/TextInput/noVNC_Input.js >> "${FILE_CAAT}"
 more $CAAT_SRC_DIR/CAAT.js >> "${FILE_CAAT}"
 more $CAAT_SRC_DIR/core/class.js >> "${FILE_CAAT}"
 more $CAAT_SRC_DIR/math/affinetransform2D.js >> "${FILE_CAAT}"
@@ -94,6 +97,8 @@ echo -e "Created on:" >> "${FILE_CAAT_CSS}"
 date "+DATE: %Y-%m-%d%nTIME: %H:%M:%S" >> "${FILE_CAAT_CSS}"
 echo -e "*/\n\n" >> "${FILE_CAAT_CSS}"
 
+more $CAAT_SRC_DIR/modules/TextInput/noVNC_Util.js >> "${FILE_CAAT_CSS}"
+more $CAAT_SRC_DIR/modules/TextInput/noVNC_Input.js >> "${FILE_CAAT_CSS}"
 more $CAAT_SRC_DIR/CAAT.js >> "${FILE_CAAT_CSS}"
 echo -e "CAAT.__CSS__=1;" >> "${FILE_CAAT_CSS}"
 more $CAAT_SRC_DIR/core/class.js >> "${FILE_CAAT_CSS}"

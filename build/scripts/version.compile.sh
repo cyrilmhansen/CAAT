@@ -113,6 +113,8 @@ echo -e "*/\n\n" >> "${FILE_CAAT_TEXTINPUT}"
 #
 echo -e "\nCreating CAAT canvas/webGL"
 $JAVA -jar $CLOSURE_COMPILER_JAR --compilation_level "${COMPILATION_LEVEL}" \
+ --js "${SOURCE_DIR}"/modules/TextInput/noVNC_Util.js \
+ --js "${SOURCE_DIR}"/modules/TextInput/noVNC_Input.js \
  --js "${SOURCE_DIR}"/CAAT.js \
  --js "${SOURCE_DIR}"/core/browserdetect.js \
  --js "${SOURCE_DIR}"/core/class.js \
@@ -162,6 +164,8 @@ $JAVA -jar $CLOSURE_COMPILER_JAR --compilation_level "${COMPILATION_LEVEL}" --js
 echo "Creating CAAT CSS"
 echo -e "CAAT.__CSS__=1;" >> /tmp/__css.js
 $JAVA -jar $CLOSURE_COMPILER_JAR --compilation_level "${COMPILATION_LEVEL}" \
+ --js "${SOURCE_DIR}"/modules/TextInput/noVNC_Util.js \
+ --js "${SOURCE_DIR}"/modules/TextInput/noVNC_Input.js \
  --js "${SOURCE_DIR}"/CAAT.js \
  --js /tmp/__css.js \
  --js "${SOURCE_DIR}"/core/browserdetect.js \

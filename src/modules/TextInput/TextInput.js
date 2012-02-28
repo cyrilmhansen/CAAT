@@ -17,6 +17,11 @@
         // Setup default font sprite sheet
         this.setDefaultFont();
 
+        this.resetTransform();
+        this.setScale(1,1);
+        this.setScaleAnchor(1.0,1.0);
+        this.setRotation(0);
+
         this.lineHeight = this.font.height;
         this.textAlign= "left";
         this.textBaseline= "top";
@@ -59,7 +64,11 @@
                     setOutline(true).
                     enableEvents(false).
                     setText('_').
-                    setLocation (0, 5);
+		    resetTransform().
+                    setScale(1,1).
+                    setRotation(0).
+		    setScaleAnchor(1.0,1.0).
+                    setPosition (0, this.font.height / 2);
 
                 this.setDefaultCursorBehavior();
                 this.addChild(this.cursorActor);
@@ -168,9 +177,10 @@
               }
              // console.log("setCursorPos : after " + this.cursorPos);
               cursorPosx = this.font.stringWidth(this.text.substr(0 , this.cursorPos));
+              cursorPoxy = this.font.height / 2;
 
               if (this.cursorActor != null) {
-                this.cursorActor.setLocation( cursorPosx , 0);
+                this.cursorActor.setPosition( cursorPosx , cursorPoxy);
               }
            }
         },

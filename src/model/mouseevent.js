@@ -170,26 +170,53 @@ CAAT.registerKeyListener= function(f) {
     CAAT.keyListeners.push(f);
 };
 
+
+
+// Redefinitions of keyboard event to use noVNC code
+
+CAAT.registerKeyListenerIfNeeded= function(f) {
+ for( var i=0; i<CAAT.keyListeners.length; i++ ) {
+        if ( f===CAAT.keyListeners[i] ) {            
+            return;
+        }
+    }
+
+    CAAT.keyListeners.push(f);
+};
+
+/**
+ * Unregister a key events notification function
+ * @param f {function}
+ */
+CAAT.unregisterKeyListener= function(f) {
+    for( var i=0; i<CAAT.windowResizeListeners.length; i++ ) {
+        if ( f===CAAT.keyListeners[i] ) {
+            CAAT.keyListeners.splice(i,1);
+            return;
+        }
+    }
+};
+
 CAAT.Keys = {
-    ENTER:13,
-    BACKSPACE:8,
-    TAB:9,
-    SHIFT:16,
-    CTRL:17,
-    ALT:18,
+    ENTER:0xFF0D,
+    BACKSPACE:0xFF08,
+    TAB:0xFF09,
+    SHIFT:0xFFE1,
+    CTRL:0xFFE3,
+    ALT:0xFFE9,
     PAUSE:19,
     CAPSLOCK:20,
-    ESCAPE:27,
+    ESCAPE:0xFF1B,
     PAGEUP:33,
     PAGEDOWN:34,
-    END:35,
-    HOME:36,
-    LEFT:37,
-    UP:38,
-    RIGHT:39,
-    DOWN:40,
-    INSERT:45,
-    DELETE:46,
+    END:0xFF57,
+    HOME:0xFF50,
+    LEFT:0xFF51,
+    UP:0xFF52,
+    RIGHT:0xFF53,
+    DOWN:0xFF54,
+    INSERT:0xFF63,
+    DELETE:0xFFFF,
     0:48,
     1:49,
     2:50,
@@ -269,10 +296,10 @@ CAAT.Keys = {
     SINGLEQUOTE:222
 };
 
-CAAT.SHIFT_KEY=    16;
-CAAT.CONTROL_KEY=  17;
-CAAT.ALT_KEY=      18;
-CAAT.ENTER_KEY=    13;
+CAAT.SHIFT_KEY=    0xFFE1;
+CAAT.CONTROL_KEY=  0xFFE3;
+CAAT.ALT_KEY=      0xFFE9;
+CAAT.ENTER_KEY=    0xFF0D;
 
 /**
  * Event modifiers.
@@ -337,13 +364,31 @@ CAAT.GlobalEnableEvents= function __GlobalEnableEvents() {
 
     if ( CAAT.GlobalEventsEnabled ) {
         return;
-    }
+    }    
 
     this.GlobalEventsEnabled= true;
 
-    window.addEventListener('keydown',
-        function(evt) {
-            var key = (evt.which) ? evt.which : evt.keyCode;
+    // Setup and activation of NoVNC key events library
+    keyboard = new Keyboard({'target': MAINDOC,
+        'onKeyPress':  function(keysym, down, evt) {
+
+	if (down) {
+                for( var i=0; i<CAAT.keyListeners.length; i++ ) {
+                    CAAT.keyListeners[i]( new CAAT.KeyEvent(
+                    	keysym,
+                        'press',
+                        {
+                            alt:        CAAT.KEY_MODIFIERS.alt,
+                            control:    CAAT.KEY_MODIFIERS.control,
+                            shift:      CAAT.KEY_MODIFIERS.shift
+                        },
+                        evt));
+                   }
+		}
+        },
+     'onKeyDown':  function(keysym, down, evt) {
+
+	  var key = keysym;
 
             if ( key===CAAT.SHIFT_KEY ) {
                 CAAT.KEY_MODIFIERS.shift= true;
@@ -365,12 +410,10 @@ CAAT.GlobalEnableEvents= function __GlobalEnableEvents() {
                 }
             }
         },
-        false);
+      'onKeyUp':  function(keysym, down, evt) {
 
-    window.addEventListener('keyup',
-        function(evt) {
+	  var key = keysym;
 
-            var key = (evt.which) ? evt.which : evt.keyCode;
             if ( key===CAAT.SHIFT_KEY ) {
                 CAAT.KEY_MODIFIERS.shift= false;
             } else if ( key===CAAT.CONTROL_KEY ) {
@@ -391,10 +434,17 @@ CAAT.GlobalEnableEvents= function __GlobalEnableEvents() {
                         evt));
                 }
             }
-        },
-        false );
+        }
 
-    window.addEventListener('resize',
+
+});
+
+    keyboard.grab();
+    
+
+
+
+    MAINDOC.addEventListener('resize',
         function(evt) {
             for( var i=0; i<CAAT.windowResizeListeners.length; i++ ) {
                 CAAT.windowResizeListeners[i].windowResized(
@@ -402,8 +452,9 @@ CAAT.GlobalEnableEvents= function __GlobalEnableEvents() {
                         window.innerHeight);
             }
         },
-        false);
+        true);
 };
+
 
 /**
  * Polyfill for requestAnimationFrame.

@@ -179,6 +179,17 @@
             this.parent= parent;
             return this;
         },
+
+	getScene : function() { 	 
+           if ( typeof this.parent ==='undefined' || this.parent === null) {
+           	return  null;
+	   }
+           if (this.parent.name === 'CAAT.Scene') {
+           	return  this.parent;
+            }
+            return this.parent.getScene();
+        },
+
         /**
          * Set this actor's background image.
          * The need of a background image is to kept compatibility with the new CSSDirector class.
@@ -2065,13 +2076,13 @@
          * @param child a CAAT.Actor object instance.
          * @return this
          */
-		addChild : function(child) {
+	 addChild : function(child) {
 
             if ( child.parent!=null ) {
                 throw('adding to a container an element with parent.');
             }
 
-            child.parent= this;
+            child.setParent(this); // For TextArea
             this.childrenList.push(child);
             child.dirty= true;
 

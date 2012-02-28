@@ -36,6 +36,7 @@
         timerSequence:                  0,      // incremental CAAT.TimerTask id.
 
         paused:                         false,
+	name:				'CAAT.Scene',
 
         isPaused :  function()  {
             return this.paused;

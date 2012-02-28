@@ -84,8 +84,12 @@
 
             for( i=0; i<chars.length; i++ ) {
                 var cw= Math.max( 1, (ctx.measureText( chars.charAt(i) ).width>>0)+1 ) + 2 * padding ;
+
+               // var cw= Math.max( 1, (ctx.measureText( chars.charAt(i) ).width>>0)+1 ) + 2 * padding ;
+               var cw= Math.max( 1, (ctx.measureText( chars.charAt(i) ).width>>0)+1 );
+
                 charWidth.push(cw);
-                textWidth+= cw;
+                textWidth+= cw + 2 * padding;
             }
 
             canvas.width= textWidth;
@@ -99,19 +103,19 @@
 
             this.charMap= {};
 
-            x=0;
+            x=padding; // x=0
             for( i=0; i<chars.length; i++ ) {
                 cchar= chars.charAt(i);
-                ctx.fillText( cchar, x+padding, 0 );
+                ctx.fillText( cchar, x, 0 ); // x + padding
                 if ( this.strokeStyle ) {
                     ctx.beginPath();
-                    ctx.strokeText( cchar, x+padding,  0 );
+                    ctx.strokeText( cchar, x,  0 ); // x + padding
                 }
                 this.charMap[cchar]= {
                     x:      x,
                     width:  charWidth[i]
                 };
-                x+= charWidth[i];
+                 x+= charWidth[i]  + 2 * padding; // next position
             }
 
             this.image= CAAT.modules.ImageUtil.optimize( canvas, 32, { top: true, bottom: true, left: false, right: false } );
@@ -158,6 +162,12 @@
                 }
             }
         },
+
+
+	// Temporary hack, best solution should be to reconciliate drawing API
+	drawString : function( ctx, str, x, y ) {
+        	this.drawText(str, ctx, x,y);
+	},
 
         save : function() {
             var str= "image/png";
